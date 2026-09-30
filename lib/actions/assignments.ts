@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDatabase } from "@/lib/data/client";
 import type { TaskStatus } from "@/lib/types";
-import { addNotice, safeLocalPath } from "@/lib/utils";
+import { addNotice, safeLocalPath, isDateValue } from "@/lib/utils";
 
 const validStatuses: TaskStatus[] = ["Pending", "In Progress", "Completed"];
 
 export async function createAssignment(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
   const date = String(formData.get("date") ?? "");
   const staffId = String(formData.get("staffId") ?? "");
   const locationId = String(formData.get("locationId") ?? "");
@@ -17,7 +18,7 @@ export async function createAssignment(formData: FormData) {
   const shiftEnd = String(formData.get("shiftEnd") ?? "");
   const remarks = String(formData.get("remarks") ?? "").trim();
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !staffId || !locationId || !dutyId || !shiftStart || !shiftEnd) {
+  if (!isDateValue(date) || !staffId || !locationId || !dutyId || !shiftStart || !shiftEnd) {
     redirect(addNotice(`/?date=${encodeURIComponent(date)}`, "error", "Complete every required field."));
   }
   if (shiftEnd <= shiftStart) {
@@ -25,7 +26,7 @@ export async function createAssignment(formData: FormData) {
   }
 
   const supabase = await getDatabase();
-  const { error } = await supabase.from("assignments").insert({
+  const values = {
     date,
     staff_id: staffId,
     location_id: locationId,
@@ -33,12 +34,27 @@ export async function createAssignment(formData: FormData) {
     shift_start: shiftStart,
     shift_end: shiftEnd,
     remarks: remarks || null,
-  });
+  };
+  const { error } = id
+    ? await supabase.from("assignments").update(values).eq("id", id).select("id").single()
+    : await supabase.from("assignments").insert(values);
   if (error) redirect(addNotice(`/?date=${encodeURIComponent(date)}`, "error", error.message));
 
   revalidatePath("/");
   revalidatePath("/my-schedule");
-  redirect(addNotice(`/?date=${encodeURIComponent(date)}`, "success", "Assignment added to the timetable."));
+  redirect(addNotice(`/?date=${encodeURIComponent(date)}`, "success", id ? "Assignment changes saved." : "Assignment added to the timetable."));
+}
+
+export async function deleteAssignment(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const returnTo = safeLocalPath(String(formData.get("returnTo") ?? ""), "/");
+  if (!id) redirect(addNotice(returnTo, "error", "Choose an assignment to remove."));
+  const supabase = await getDatabase();
+  const { error } = await supabase.from("assignments").delete().eq("id", id).select("id").single();
+  if (error) redirect(addNotice(returnTo, "error", error.message));
+  revalidatePath("/");
+  revalidatePath("/my-schedule");
+  redirect(addNotice(returnTo, "success", "Assignment removed."));
 }
 
 export async function updateAssignmentStatus(formData: FormData) {

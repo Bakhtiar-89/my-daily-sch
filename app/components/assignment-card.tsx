@@ -1,5 +1,7 @@
-import { updateAssignmentStatus } from "@/lib/actions/assignments";
-import type { Assignment } from "@/lib/types";
+import { AssignmentForm } from "./assignment-form";
+import { ConfirmButton } from "./confirm-button";
+import { deleteAssignment, updateAssignmentStatus } from "@/lib/actions/assignments";
+import type { Assignment, AssignmentOptions } from "@/lib/types";
 import { formatTime } from "@/lib/utils";
 
 const nextStatus = {
@@ -7,7 +9,7 @@ const nextStatus = {
   "In Progress": { value: "Completed", label: "Mark complete", icon: "✓" },
 } as const;
 
-export function AssignmentCard({ assignment, returnTo }: { assignment: Assignment; returnTo: string }) {
+export function AssignmentCard({ assignment, returnTo, options }: { assignment: Assignment; returnTo: string; options: AssignmentOptions }) {
   const next = assignment.task_status === "Completed" ? null : nextStatus[assignment.task_status];
   return (
     <article className="assignment-card">
@@ -35,6 +37,15 @@ export function AssignmentCard({ assignment, returnTo }: { assignment: Assignmen
           </form>
         ) : <span className="completed-mark"><span aria-hidden="true">✓</span> All done</span>}
       </div>
+      <details className="assignment-edit">
+        <summary>Edit assignment</summary>
+        <AssignmentForm date={assignment.date} options={options} assignment={assignment} />
+        <form action={deleteAssignment}>
+          <input type="hidden" name="id" value={assignment.id} />
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <ConfirmButton label="Remove assignment" message="Remove this assignment from the timetable?" />
+        </form>
+      </details>
     </article>
   );
 }

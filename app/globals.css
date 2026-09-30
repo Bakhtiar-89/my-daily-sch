@@ -313,3 +313,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #4c9878
   .staff-complete { justify-content: center; min-height: 42px; }
   .fatal-error-panel { margin: 15px auto; padding: 20px; }
 }
+
+.assignment-edit { grid-column: 1 / -1; width: 100%; }
+.assignment-edit summary { cursor: pointer; color: #43624e; padding: 10px 0; }
+.assignment-edit .assignment-form { margin: 12px 0; }

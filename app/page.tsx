@@ -75,7 +75,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
         <section className="panel assignment-panel">
           <div className="panel-heading"><div><p className="eyebrow">SHIFT ROSTER</p><h2>Assignments for this day <span className="count-pill">{assignments.length}</span></h2></div><span className="sort-label">Sorted by start time</span></div>
           {assignments.length ? (
-            <div className="assignment-list">{assignments.map((assignment) => <AssignmentCard key={assignment.id} assignment={assignment} returnTo={returnTo} />)}</div>
+            <div className="assignment-list">{assignments.map((assignment) => <AssignmentCard key={assignment.id} assignment={assignment} returnTo={returnTo} options={options} />)}</div>
           ) : (
             <div className="empty-state"><span className="empty-icon" aria-hidden="true">▤</span><h3>No assignments yet</h3><p>Add the first shift for {formatDate(date, { weekday: undefined })} to build the day’s plan.</p></div>
           )}
