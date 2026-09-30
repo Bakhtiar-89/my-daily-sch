@@ -8,6 +8,7 @@ const links = [
   { href: "/staff", label: "Staff", icon: "♙" },
   { href: "/locations", label: "Locations", icon: "⌖" },
   { href: "/duties", label: "Duties", icon: "☷" },
+  { href: "/my-schedule", label: "My Schedule", icon: "◷" },
 ];
 
 export function Navigation() {

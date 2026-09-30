@@ -18,6 +18,26 @@ export async function listAssignments(date: string): Promise<Assignment[]> {
   return (data ?? []) as unknown as Assignment[];
 }
 
+export async function listStaff(): Promise<Staff[]> {
+  const supabase = await getDatabase();
+  const { data, error } = await supabase.from("staff").select("id, name, role").order("name");
+  if (error) throw error;
+  return (data ?? []) as Staff[];
+}
+
+export async function listPublishedAssignmentsForStaff(date: string, staffId: string): Promise<Assignment[]> {
+  const supabase = await getDatabase();
+  const { data, error } = await supabase
+    .from("assignments")
+    .select(assignmentSelect)
+    .eq("date", date)
+    .eq("staff_id", staffId)
+    .eq("published", true)
+    .order("shift_start", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as unknown as Assignment[];
+}
+
 export async function getAssignmentOptions(): Promise<AssignmentOptions> {
   const supabase = await getDatabase();
   const [staffResult, locationResult, dutyResult] = await Promise.all([
