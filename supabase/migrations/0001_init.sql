@@ -1,1 +1,100 @@
-create table if not exists staff (\n  id uuid primary key default gen_random_uuid(),\n  name text not null,\n  role text,\n  user_id uuid,\n  created_at timestamptz not null default now()\n);\nalter table staff enable row level security;\ndrop policy if exists \"staff_v1_read\" on staff;\ncreate policy \"staff_v1_read\" on staff for select using (true);\ndrop policy if exists \"staff_v1_write\" on staff;\ncreate policy \"staff_v1_write\" on staff for all using (true) with check (true);\n\ncreate table if not exists locations (\n  id uuid primary key default gen_random_uuid(),\n  name text not null,\n  notes text,\n  user_id uuid,\n  created_at timestamptz not null default now()\n);\nalter table locations enable row level security;\ndrop policy if exists \"locations_v1_read\" on locations;\ncreate policy \"locations_v1_read\" on locations for select using (true);\ndrop policy if exists \"locations_v1_write\" on locations;\ncreate policy \"locations_v1_write\" on locations for all using (true) with check (true);\n\ncreate table if not exists duties (\n  id uuid primary key default gen_random_uuid(),\n  name text not null,\n  description text,\n  user_id uuid,\n  created_at timestamptz not null default now()\n);\nalter table duties enable row level security;\ndrop policy if exists \"duties_v1_read\" on duties;\ncreate policy \"duties_v1_read\" on duties for select using (true);\ndrop policy if exists \"duties_v1_write\" on duties;\ncreate policy \"duties_v1_write\" on duties for all using (true) with check (true);\n\ncreate table if not exists assignments (\n  id uuid primary key default gen_random_uuid(),\n  staff_id uuid references staff(id) on delete cascade,\n  location_id uuid references locations(id) on delete cascade,\n  duty_id uuid references duties(id) on delete cascade,\n  date date not null,\n  shift_start time not null,\n  shift_end time not null,\n  task_status text not null default 'Pending' check (task_status in ('Pending','In Progress','Completed')),\n  remarks text,\n  published boolean not null default false,\n  user_id uuid,\n  created_at timestamptz not null default now()\n);\nalter table assignments enable row level security;\ndrop policy if exists \"assignments_v1_read\" on assignments;\ncreate policy \"assignments_v1_read\" on assignments for select using (true);\ndrop policy if exists \"assignments_v1_write\" on assignments;\ncreate policy \"assignments_v1_write\" on assignments for all using (true) with check (true);\n\ninsert into staff (name, role) select 'Ali Hassan', 'Security' where not exists (select 1 from staff where name = 'Ali Hassan');\ninsert into staff (name, role) select 'Sara Lee', 'Operations' where not exists (select 1 from staff where name = 'Sara Lee');\ninsert into staff (name, role) select 'John Tan', 'Logistics' where not exists (select 1 from staff where name = 'John Tan');\n\ninsert into locations (name, notes) select 'Gate 1', 'Main entrance' where not exists (select 1 from locations where name = 'Gate 1');\ninsert into locations (name, notes) select 'Warehouse A', 'Loading bay' where not exists (select 1 from locations where name = 'Warehouse A');\ninsert into locations (name, notes) select 'Control Room', 'Level 2' where not exists (select 1 from locations where name = 'Control Room');\n\ninsert into duties (name, description) select 'Baggage check', 'Screen all incoming baggage' where not exists (select 1 from duties where name = 'Baggage check');\ninsert into duties (name, description) select 'Perimeter patrol', 'Hourly perimeter walk' where not exists (select 1 from duties where name = 'Perimeter patrol');\ninsert into duties (name, description) select 'Loading supervision', 'Oversee loading operations' where not exists (select 1 from duties where name = 'Loading supervision');\n\ninsert into assignments (staff_id, location_id, duty_id, date, shift_start, shift_end, task_status, remarks, published)\nselect s.id, l.id, d.id, current_date, '08:00', '16:00', 'Completed', 'All clear', true\nfrom staff s, locations l, duties d\nwhere s.name = 'Ali Hassan' and l.name = 'Gate 1' and d.name = 'Baggage check'\nand not exists (select 1 from assignments where staff_id = s.id and date = current_date and shift_start = '08:00');\n\ninsert into assignments (staff_id, location_id, duty_id, date, shift_start, shift_end, task_status, remarks, published)\nselect s.id, l.id, d.id, current_date, '09:00', '17:00', 'In Progress', 'Hourly logs required', true\nfrom staff s, locations l, duties d\nwhere s.name = 'Sara Lee' and l.name = 'Control Room' and d.name = 'Perimeter patrol'\nand not exists (select 1 from assignments where staff_id = s.id and date = current_date and shift_start = '09:00');\n\ninsert into assignments (staff_id, location_id, duty_id, date, shift_start, shift_end, task_status, remarks, published)\nselect s.id, l.id, d.id, current_date, '14:00', '22:00', 'Pending', 'Check pallet counts', true\nfrom staff s, locations l, duties d\nwhere s.name = 'John Tan' and l.name = 'Warehouse A' and d.name = 'Loading supervision'\nand not exists (select 1 from assignments where staff_id = s.id and date = current_date and shift_start = '14:00');\n\ninsert into assignments (staff_id, location_id, duty_id, date, shift_start, shift_end, task_status, remarks, published)\nselect s.id, l.id, d.id, current_date + 1, '08:00', '16:00', 'Pending', 'Bring radio', false\nfrom staff s, locations l, duties d\nwhere s.name = 'Ali Hassan' and l.name = 'Gate 1' and d.name = 'Baggage check'\nand not exists (select 1 from assignments where staff_id = s.id and date = current_date + 1 and shift_start = '08:00');\n\ninsert into assignments (staff_id, location_id, duty_id, date, shift_start, shift_end, task_status, remarks, published)\nselect s.id, l.id, d.id, current_date + 1, '12:00', '20:00', 'Pending', '', false\nfrom staff s, locations l, duties d\nwhere s.name = 'Ali Hassan' and l.name = 'Control Room' and d.name = 'Perimeter patrol'\nand not exists (select 1 from assignments where staff_id = s.id and date = current_date + 1 and shift_start = '12:00');\n
+create table if not exists staff (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  role text,
+  user_id uuid,
+  created_at timestamptz not null default now()
+);
+alter table staff enable row level security;
+drop policy if exists "staff_v1_read" on staff;
+create policy "staff_v1_read" on staff for select using (true);
+drop policy if exists "staff_v1_write" on staff;
+create policy "staff_v1_write" on staff for all using (true) with check (true);
+
+create table if not exists locations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  notes text,
+  user_id uuid,
+  created_at timestamptz not null default now()
+);
+alter table locations enable row level security;
+drop policy if exists "locations_v1_read" on locations;
+create policy "locations_v1_read" on locations for select using (true);
+drop policy if exists "locations_v1_write" on locations;
+create policy "locations_v1_write" on locations for all using (true) with check (true);
+
+create table if not exists duties (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  user_id uuid,
+  created_at timestamptz not null default now()
+);
+alter table duties enable row level security;
+drop policy if exists "duties_v1_read" on duties;
+create policy "duties_v1_read" on duties for select using (true);
+drop policy if exists "duties_v1_write" on duties;
+create policy "duties_v1_write" on duties for all using (true) with check (true);
+
+create table if not exists assignments (
+  id uuid primary key default gen_random_uuid(),
+  staff_id uuid references staff(id) on delete cascade,
+  location_id uuid references locations(id) on delete cascade,
+  duty_id uuid references duties(id) on delete cascade,
+  date date not null,
+  shift_start time not null,
+  shift_end time not null,
+  task_status text not null default 'Pending' check (task_status in ('Pending','In Progress','Completed')),
+  remarks text,
+  published boolean not null default false,
+  user_id uuid,
+  created_at timestamptz not null default now()
+);
+alter table assignments enable row level security;
+drop policy if exists "assignments_v1_read" on assignments;
+create policy "assignments_v1_read" on assignments for select using (true);
+drop policy if exists "assignments_v1_write" on assignments;
+create policy "assignments_v1_write" on assignments for all using (true) with check (true);
+
+insert into staff (name, role) select 'Ali Hassan', 'Security' where not exists (select 1 from staff where name = 'Ali Hassan');
+insert into staff (name, role) select 'Sara Lee', 'Operations' where not exists (select 1 from staff where name = 'Sara Lee');
+insert into staff (name, role) select 'John Tan', 'Logistics' where not exists (select 1 from staff where name = 'John Tan');
+
+insert into locations (name, notes) select 'Gate 1', 'Main entrance' where not exists (select 1 from locations where name = 'Gate 1');
+insert into locations (name, notes) select 'Warehouse A', 'Loading bay' where not exists (select 1 from locations where name = 'Warehouse A');
+insert into locations (name, notes) select 'Control Room', 'Level 2' where not exists (select 1 from locations where name = 'Control Room');
+
+insert into duties (name, description) select 'Baggage check', 'Screen all incoming baggage' where not exists (select 1 from duties where name = 'Baggage check');
+insert into duties (name, description) select 'Perimeter patrol', 'Hourly perimeter walk' where not exists (select 1 from duties where name = 'Perimeter patrol');
+insert into duties (name, description) select 'Loading supervision', 'Oversee loading operations' where not exists (select 1 from duties where name = 'Loading supervision');
+
+insert into assignments (staff_id, location_id, duty_id, date, shift_start, shift_end, task_status, remarks, published)
+select s.id, l.id, d.id, current_date, '08:00', '16:00', 'Completed', 'All clear', true
+from staff s, locations l, duties d
+where s.name = 'Ali Hassan' and l.name = 'Gate 1' and d.name = 'Baggage check'
+and not exists (select 1 from assignments where staff_id = s.id and date = current_date and shift_start = '08:00');
+
+insert into assignments (staff_id, location_id, duty_id, date, shift_start, shift_end, task_status, remarks, published)
+select s.id, l.id, d.id, current_date, '09:00', '17:00', 'In Progress', 'Hourly logs required', true
+from staff s, locations l, duties d
+where s.name = 'Sara Lee' and l.name = 'Control Room' and d.name = 'Perimeter patrol'
+and not exists (select 1 from assignments where staff_id = s.id and date = current_date and shift_start = '09:00');
+
+insert into assignments (staff_id, location_id, duty_id, date, shift_start, shift_end, task_status, remarks, published)
+select s.id, l.id, d.id, current_date, '14:00', '22:00', 'Pending', 'Check pallet counts', true
+from staff s, locations l, duties d
+where s.name = 'John Tan' and l.name = 'Warehouse A' and d.name = 'Loading supervision'
+and not exists (select 1 from assignments where staff_id = s.id and date = current_date and shift_start = '14:00');
+
+insert into assignments (staff_id, location_id, duty_id, date, shift_start, shift_end, task_status, remarks, published)
+select s.id, l.id, d.id, current_date + 1, '08:00', '16:00', 'Pending', 'Bring radio', false
+from staff s, locations l, duties d
+where s.name = 'Ali Hassan' and l.name = 'Gate 1' and d.name = 'Baggage check'
+and not exists (select 1 from assignments where staff_id = s.id and date = current_date + 1 and shift_start = '08:00');
+
+insert into assignments (staff_id, location_id, duty_id, date, shift_start, shift_end, task_status, remarks, published)
+select s.id, l.id, d.id, current_date + 1, '12:00', '20:00', 'Pending', '', false
+from staff s, locations l, duties d
+where s.name = 'Ali Hassan' and l.name = 'Control Room' and d.name = 'Perimeter patrol'
+and not exists (select 1 from assignments where staff_id = s.id and date = current_date + 1 and shift_start = '12:00');
