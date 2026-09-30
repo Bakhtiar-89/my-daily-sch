@@ -73,7 +73,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
 
       <div className="dashboard-columns">
         <section className="panel assignment-panel">
-          <div className="panel-heading"><div><p className="eyebrow">SHIFT ROSTER</p><h2>Today’s assignments <span className="count-pill">{assignments.length}</span></h2></div><span className="sort-label">Sorted by start time</span></div>
+          <div className="panel-heading"><div><p className="eyebrow">SHIFT ROSTER</p><h2>Assignments for this day <span className="count-pill">{assignments.length}</span></h2></div><span className="sort-label">Sorted by start time</span></div>
           {assignments.length ? (
             <div className="assignment-list">{assignments.map((assignment) => <AssignmentCard key={assignment.id} assignment={assignment} returnTo={returnTo} />)}</div>
           ) : (

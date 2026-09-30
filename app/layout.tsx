@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Navigation } from "@/app/components/navigation";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,8 +23,13 @@ export default function RootLayout({
             </a>
             <span className="workspace-chip"><i />Team workspace</span>
           </header>
-          {children}
-          <footer className="app-footer"><span>DAYBOOK <i>·</i> DAILY OPERATIONS</span><span>One clear plan for every shift.</span></footer>
+          <div className="workspace-layout">
+            <Navigation />
+            <div className="main-column">
+              {children}
+              <footer className="app-footer"><span>DAYBOOK <i>·</i> DAILY OPERATIONS</span><span>One clear plan for every shift.</span></footer>
+            </div>
+          </div>
         </div>
       </body>
     </html>
